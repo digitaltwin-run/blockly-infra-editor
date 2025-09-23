@@ -12,7 +12,7 @@
         button:hover { background: #2980b9; }
         .save-status { color: #2ecc71; font-size: 12px; margin-left: 10px; }
         .container { display: flex; flex: 1; overflow: hidden; }
-        .editor-panel { flex: 1; display: flex; flex-direction: column; background: white; margin: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .editor-panel { width: 40%; display: flex; flex-direction: column; background: white; margin: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .editor-header { background: #34495e; color: white; padding: 10px 20px; border-radius: 8px 8px 0 0; font-weight: bold; }
         #textEditor { flex: 1; padding: 0; }
         #textEditor textarea { width: 100%; height: 100%; border: none; padding: 20px; font-family: 'Courier New', monospace; font-size: 14px; resize: none; outline: none; border-radius: 0 0 8px 8px; }
@@ -26,6 +26,11 @@
         .success { background: #27ae60; color: white; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
         .info { background: #3498db; color: white; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
         #toolbox { display: none; }
+        #blocklyDiv { height: 50%; }
+        #preview { height: 50%; width: 40%; float: right; border-left: 1px solid #ddd; }
+        #preview-header { background: #27ae60; color: white; padding: 10px 20px; font-weight: bold; }
+        #preview-content { height: calc(100% - 40px); padding: 20px; overflow-y: auto; }
+        #preview-content pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; line-height: 1.4; border: 1px solid #e9ecef; margin: 0; }
     </style>
 </head>
 <body>
@@ -35,30 +40,31 @@
             <span class="save-status" id="saveStatus"></span>
         </div>
         <div class="buttons">
-            <button onclick="switchToTextEditor()">📝 Text</button>
-            <button onclick="switchToVisualEditor()">🎨 Visual</button>
-            <button onclick="saveFile()">💾 Save</button>
-            <button onclick="validateContent()">✓ Validate</button>
-            <button onclick="testDocker()" style="display:{{ 'block' if is_docker else 'none' }};">🐳 Test</button>
-            <button onclick="loadBackup()">📁 Backup</button>
-            <button onclick="formatContent()">🎨 Format</button>
+            <button onclick="saveFile()"> Save</button>
+            <button onclick="validateContent()"> Validate</button>
+            <button onclick="testDocker()" style="display:{{ 'block' if is_docker else 'none' }};"> Test</button>
+            <button onclick="loadBackup()"> Backup</button>
+            <button onclick="formatContent()"> Format</button>
         </div>
     </div>
     <div class="container">
         <div class="editor-panel">
             <div class="editor-header">
-                📝 Editor - {{ file_type.upper() }}
+                 Text Editor - {{ file_type.upper() }}
             </div>
             <div id="textEditor">
                 <textarea id="textContent" placeholder="Edit your {{ file_type }} content here...">{{ initial_content }}</textarea>
             </div>
-            <div id="blocklyDiv" style="display: none;">
+            <div class="editor-header">
+                 Visual Editor - Blockly
+            </div>
+            <div id="blocklyDiv">
                 <!-- Blockly editor will be injected here -->
             </div>
         </div>
         <div class="preview-panel">
             <div class="preview-header">
-                👁️ Live Preview
+                 Live Preview
             </div>
             <div class="preview-content">
                 <div id="errorDiv"></div>
@@ -68,20 +74,20 @@
     </div>
     
     <!-- Blockly Toolbox -->
-    <xml id="toolbox">
+    <xml id="toolbox" style="display: none">
         <!-- Generic Blocks -->
-        <category name="Structure" colour="%_STRUCTURE">
+        <category name="Structure" colour="#4a6cd4">
             <block type="dict_create_with"></block>
             <block type="list_create_with"></block>
             <block type="key_value_pair"></block>
         </category>
-        <category name="Primitives" colour="%_PRIMITIVES">
+        <category name="Primitives" colour="#5ba55b">
             <block type="text"></block>
             <block type="math_number"></block>
             <block type="logic_boolean"></block>
         </category>
         <!-- XML/HTML Blocks -->
-        <category name="XML/HTML" colour="%_XML">
+        <category name="XML/HTML" colour="#d9a341">
             <block type="xml_tag"></block>
             <block type="xml_attribute"></block>
         </category>
@@ -89,15 +95,12 @@
     
     <!-- Blockly Libraries -->
     <script src="/vendor/blockly.min.js"></script>
-    <script src="/vendor/blocks_compressed.js"></script>
-    <script src="/vendor/javascript_compressed.js"></script>
     <script src="/js/generic_blocks.js"></script>
     <script src="/js/generic_generators.js"></script>
     
     <script>
         var dirty = false;
         var workspace = null;
-        var currentMode = 'text'; // 'text' or 'visual'
         
         // Initialize Blockly workspace
         function initBlockly() {
@@ -110,9 +113,7 @@
                 
                 // Auto-generate on change
                 workspace.addChangeListener(function() {
-                    if (currentMode === 'visual') {
-                        generateCodeFromBlocks();
-                    }
+                    generateCodeFromBlocks();
                 });
             }
         }
@@ -131,33 +132,6 @@
             }
         }
         
-        // Switch to text editor mode
-        function switchToTextEditor() {
-            currentMode = 'text';
-            document.getElementById('textEditor').style.display = 'block';
-            document.getElementById('blocklyDiv').style.display = 'none';
-            // Update preview with current text content
-            document.getElementById('yamlOutput').textContent = document.getElementById('textContent').value;
-        }
-        
-        // Switch to visual editor mode
-        function switchToVisualEditor() {
-            currentMode = 'visual';
-            document.getElementById('textEditor').style.display = 'none';
-            document.getElementById('blocklyDiv').style.display = 'block';
-            initBlockly();
-            // Generate code from current text content
-            try {
-                // For now, we'll just show the visual editor without loading existing content
-                // In a more advanced implementation, we could parse the YAML and convert to blocks
-                generateCodeFromBlocks();
-            } catch (e) {
-                console.error("Could not load existing content into visual editor", e);
-                // Clear workspace if we can't load existing content
-                workspace.clear();
-            }
-        }
-        
         function saveFile(isAutoSave = false) {
             var code = document.getElementById('textContent').value;
             fetch('/save', {
@@ -169,7 +143,7 @@
             .then(data => {
                 if (data.success) {
                     var status = document.getElementById('saveStatus');
-                    status.textContent = isAutoSave ? '✓ Auto-saved' : '✓ Saved';
+                    status.textContent = isAutoSave ? ' Auto-saved' : ' Saved';
                     dirty = false;
                     setTimeout(() => { status.textContent = ''; }, 3000);
                 } else {
@@ -247,6 +221,11 @@
         setInterval(function() {
             if (dirty) { saveFile(true); }
         }, 10000);
+        
+        // Initialize Blockly when page loads
+        window.addEventListener('load', function() {
+            initBlockly();
+        });
     </script>
 </body>
 </html>

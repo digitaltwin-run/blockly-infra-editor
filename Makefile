@@ -96,7 +96,7 @@ clean-venv: ## Remove virtual environment (venv)
 
 docker-build: ## Build Docker image (uses Dockerfile if present)
 ifneq ($(HAVE_DOCKERFILE),)
-	@docker build -t "$(IMAGE):$(TAG)" .
+	@docker build --no-cache --pull -t "$(IMAGE):$(TAG)" .
 else
 	@echo "Dockerfile not found. Skipping build."
 endif
