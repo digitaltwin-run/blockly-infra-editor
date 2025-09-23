@@ -9,6 +9,12 @@ Blockly.YAML = new Blockly.Generator('YAML');
 Blockly.YAML.INDENT = '  ';
 
 /**
+ * Order constants for YAML generator
+ */
+Blockly.YAML.ORDER_ATOMIC = 0;
+Blockly.YAML.ORDER_NONE = 99;
+
+/**
  * Converts the entire workspace into a YAML string.
  * @param {!Blockly.Workspace} workspace The workspace to convert.
  * @return {string} The generated YAML code.
@@ -97,6 +103,17 @@ Blockly.YAML['logic_boolean'] = function(block) {
 
 // --- XML Generator ---
 Blockly.XML = new Blockly.Generator('XML');
+
+/**
+ * The indentation string for XML output.
+ */
+Blockly.XML.INDENT = '  ';
+
+/**
+ * Order constants for XML generator
+ */
+Blockly.XML.ORDER_ATOMIC = 0;
+Blockly.XML.ORDER_NONE = 99;
 
 /**
  * Converts the entire workspace into an XML string.
