@@ -1,6 +1,6 @@
-# Blockly YAML Editor
+# Blockly Infrastructure Editor
 
-A simple, offline web-based editor for YAML and Docker configuration files using Blockly.
+A simple, offline web-based editor for YAML, XML and Docker configuration files using Blockly.
 
 ## Quick Start
 
